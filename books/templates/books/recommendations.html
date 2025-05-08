@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buchempfehlungen</title>
+</head>
+<body>
+    <h1>Deine Buchempfehlungen 📚</h1>
+    <ul>
+        {% for book in books %}
+        <li><strong>{{ book.title }}</strong> von {{ book.author }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
