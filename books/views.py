@@ -3,7 +3,8 @@ from joblib import load
 import pandas as pd
 import numpy as np
 from django.contrib.auth.decorators import login_required
-from books.models import UserProfile  # ← Wichtig!
+from .models import Rating, Book
+
 
 # Modell laden (Pivot-Tabelle + Ähnlichkeitsmatrix)
 pivot, similarity = load('ml/book_model.joblib')
@@ -23,31 +24,32 @@ def get_recommendations_for_user(user_index, num_users=5, num_books=5):
     # Für Template: Spaltennamen anpassen
     books_list = recommended_books.rename(columns={
         'Book-Title': 'title',
-        'Book-Author': 'author'
+        'Book-Author': 'author',
+        'ISBN': 'isbn'
     }).to_dict(orient='records')
 
     return books_list
 
 @login_required
 def recommendations_view(request):
-    try:
-        kaggle_id = request.user.userprofile.kaggle_user_id
-    except UserProfile.DoesNotExist:
-        return render(request, "books/recommendations.html", {
-            "books": [],
-            "message": "⚠️ Kein Kaggle-Profil verknüpft. Admin muss dies zuweisen."
-        })
-
-    try:
-        user_index = list(pivot.index).index(kaggle_id)
-    except ValueError:
-        return render(request, "books/recommendations.html", {
-            "books": [],
-            "message": "⚠️ User-ID nicht im Modell vorhanden."
-        })
+    # Fester Index (z. B. Nutzer-ID 0 im Pivot) zum Testen
+    user_index = 0
 
     recommended_books = get_recommendations_for_user(user_index)
 
     return render(request, 'books/recommendations.html', {
         'books': recommended_books,
     })
+
+@login_required
+def profile_view(request):
+    user = request.user
+    ratings = Rating.objects.filter(user=user)
+    total_ratings = ratings.count()
+    
+    return render(request, "books/profile.html", {
+        "user": user,
+        "ratings": ratings,
+        "total_ratings": total_ratings
+    })
+
