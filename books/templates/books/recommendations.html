@@ -20,7 +20,10 @@
     <h1>Deine Buchempfehlungen 📚</h1>
     <ul>
         {% for book in books %}
-        <li><strong>{{ book.title }}</strong> von {{ book.author }}</li>
+        <li>
+            <strong>{{ book.title }}</strong> von {{ book.author }}
+            – <a href="{% url 'rate_book' book.isbn %}">bewerten</a>
+        </li>
         {% endfor %}
     </ul>
 </body>

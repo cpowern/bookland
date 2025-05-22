@@ -1,0 +1,10 @@
+<h2>{{ book.title }}</h2>
+<p>von {{ book.author }}</p>
+
+<form method="POST">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Bewertung speichern</button>
+</form>
+
+<a href="{% url 'recommendations' %}">Zurück</a>
