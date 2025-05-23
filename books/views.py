@@ -103,22 +103,18 @@ def home_view(request):
 
 
 def main_view(request):
-    # Top 5 Bücher mit den meisten Bewertungen
-    top_isbns = (
-        Rating.objects.values("isbn")
-        .annotate(count=Count("isbn"))
-        .order_by("-count")[:5]
-    )
+    # Beliebteste Bücher basierend auf der Gesamtzahl an Bewertungen im Pivot (ML-Modell)
+    top_isbns = pivot.sum(axis=0).sort_values(ascending=False).head(5).index.tolist()
 
     books_list = []
-    for item in top_isbns:
-        row = books[books["ISBN"] == item["isbn"]]
+    for isbn in top_isbns:
+        row = books[books["ISBN"] == isbn]
         if not row.empty:
             books_list.append({
-                "isbn": item["isbn"],
+                "isbn": isbn,
                 "title": row.iloc[0]["Book-Title"],
                 "author": row.iloc[0]["Book-Author"],
-                "count": item["count"]
+                "count": int(pivot[isbn].astype(bool).sum())  # Anzahl User mit Bewertung > 0
             })
 
     return render(request, "books/main.html", {"books": books_list})
@@ -138,6 +134,7 @@ def search_books_view(request):
         {
             "title": row["Book-Title"],
             "author": row["Book-Author"],
+            "isbn": row["ISBN"],   # 👈 WICHTIG
             "count": 0
         }
         for _, row in results.iterrows()

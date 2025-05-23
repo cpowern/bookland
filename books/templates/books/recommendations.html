@@ -8,12 +8,23 @@
             top: 10px;
             right: 10px;
         }
+        .top-left {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
     </style>
 </head>
 <body>
+    <div class="top-left">
+        <a href="{% url 'main' %}">
+            <button>🏠 Zur Startseite</button>
+        </a>
+    </div>
+
     <div class="top-right">
         <a href="{% url 'profile' %}">
-            <button>Profil</button>
+            <button>👤 Profil</button>
         </a>
     </div>
 

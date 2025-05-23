@@ -27,13 +27,17 @@
     </p>
 
     <input type="text" id="searchInput" placeholder="Buchtitel eingeben...">
-
-    <h2>📈 Beliebteste Bücher</h2>
     <ul id="bookResults">
+        <!-- Suchergebnisse erscheinen hier -->
+    </ul>
+
+    <h2>🌟 Beliebteste Bücher</h2>
+    <ul>
         {% for book in books %}
         <li>
-            <strong>{{ book.title }}</strong> von {{ book.author }}
-            ({{ book.count }} Bewertungen)
+            <strong>{{ book.title }}</strong> von {{ book.author }}<br>
+            ({{ book.count }} Bewertungen, Ø {{ book.avg|floatformat:1 }}★)<br>
+            <a href="{% url 'rate_book' book.isbn %}">➕ Bewerten</a>
         </li>
         {% endfor %}
     </ul>
