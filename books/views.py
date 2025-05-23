@@ -5,6 +5,9 @@ import numpy as np
 from django.contrib.auth.decorators import login_required
 from .models import Rating, Book, UserProfile
 from .forms import RatingForm
+from django.db.models import Count
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 
 # Modell laden (Pivot-Tabelle + Ähnlichkeitsmatrix)
 pivot, similarity = load('ml/book_model.joblib')
@@ -91,3 +94,50 @@ def rate_book_view(request, isbn):
         "book": book,
         "form": form,
     })
+
+def main_view(request):
+    # Top 5 Bücher mit den meisten Bewertungen
+    top_isbns = (
+        Rating.objects.values("isbn")
+        .annotate(count=Count("isbn"))
+        .order_by("-count")[:5]
+    )
+
+    books_list = []
+    for item in top_isbns:
+        row = books[books["ISBN"] == item["isbn"]]
+        if not row.empty:
+            books_list.append({
+                "isbn": item["isbn"],
+                "title": row.iloc[0]["Book-Title"],
+                "author": row.iloc[0]["Book-Author"],
+                "count": item["count"]
+            })
+
+    return render(request, "books/main.html", {"books": books_list})
+
+def search_books_view(request):
+    query = request.GET.get("query", "")
+    if query:
+        filtered = books[books["Book-Title"].str.contains(query, case=False, na=False)].copy()
+        filtered["match_score"] = filtered["Book-Title"].str.lower().str.find(query.lower())
+        filtered = filtered[filtered["match_score"] != -1].sort_values(by="match_score")
+        results = filtered.head(5)
+
+    else:
+        results = pd.DataFrame()
+
+    results_list = [
+        {
+            "title": row["Book-Title"],
+            "author": row["Book-Author"],
+            "count": 0
+        }
+        for _, row in results.iterrows()
+    ]
+
+    html = render_to_string("books/partials/book_list.html", {"books": results_list})
+    return HttpResponse(html)
+
+
+

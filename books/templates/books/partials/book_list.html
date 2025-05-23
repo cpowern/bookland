@@ -1,0 +1,7 @@
+{% for book in books %}
+    <li>
+        <strong>{{ book.title }}</strong> von {{ book.author }} ({{ book.count }} Bewertungen)
+    </li>
+{% empty %}
+    <li>Keine Treffer gefunden.</li>
+{% endfor %}

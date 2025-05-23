@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hauptseite</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const input = document.getElementById("searchInput");
+            const results = document.getElementById("bookResults");
+
+            input.addEventListener("keyup", function () {
+                const query = input.value;
+                fetch(`/search-books/?query=${encodeURIComponent(query)}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        results.innerHTML = html;
+                    });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>📚 Bücher durchsuchen</h1>
+    <input type="text" id="searchInput" placeholder="Buchtitel eingeben...">
+
+    <h2>📈 Beliebteste Bücher</h2>
+    <ul id="bookResults">
+        {% for book in books %}
+        <li>
+            <strong>{{ book.title }}</strong> von {{ book.author }}
+            ({{ book.count }} Bewertungen)
+        </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
