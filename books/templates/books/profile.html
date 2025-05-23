@@ -7,12 +7,13 @@
     <h1>👤 Profil</h1>
     <p><strong>Name:</strong> {{ user.username }}</p>
     <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Status:</strong> {% if user.is_staff or user.is_superuser %}Admin{% else %}Benutzer{% endif %}</p>
     <p><strong>Gespeicherte Bewertungen:</strong> {{ total_ratings }}</p>
 
     <h3>Deine Bewertungen:</h3>
     <ul>
         {% for rating in ratings %}
-            <li>{{ rating.book.title }} – {{ rating.stars }} ★</li>
+            <li>{{ rating.title }} von {{ rating.author }} – {{ rating.score }} ★</li>
         {% empty %}
             <li>Keine Bewertungen vorhanden.</li>
         {% endfor %}
@@ -21,10 +22,10 @@
     <p>
         <a href="{% url 'recommendations' %}">🔙 Zurück zu Empfehlungen</a> |
         <form action="{% url 'logout' %}" method="post" style="display:inline">
-          {% csrf_token %}
-          <button type="submit" style="background:none;border:none;color:#00f;cursor:pointer;">
-              🚪 Logout
-          </button>
+            {% csrf_token %}
+            <button type="submit" style="background:none;border:none;color:#00f;cursor:pointer;">
+                🚪 Logout
+            </button>
         </form>
     </p>
 </body>

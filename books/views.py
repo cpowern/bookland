@@ -45,11 +45,27 @@ def recommendations_view(request):
 @login_required
 def profile_view(request):
     user = request.user
-    ratings = Rating.objects.filter(user=user)
+    ratings_qs = Rating.objects.filter(user=user)
+    ratings = []
+
+    for r in ratings_qs:
+        row = books[books['ISBN'] == r.isbn]
+        if not row.empty:
+            title = row.iloc[0]["Book-Title"]
+            author = row.iloc[0]["Book-Author"]
+        else:
+            title = r.isbn
+            author = "Unbekannt"
+        ratings.append({
+            "title": title,
+            "author": author,
+            "score": r.score
+        })
+
     return render(request, "books/profile.html", {
         "user": user,
         "ratings": ratings,
-        "total_ratings": ratings.count()
+        "total_ratings": ratings_qs.count()
     })
 
 @login_required
