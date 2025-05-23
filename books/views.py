@@ -95,6 +95,13 @@ def rate_book_view(request, isbn):
         "form": form,
     })
 
+# in views.py
+def home_view(request):
+    if request.user.is_authenticated:
+        return redirect("main")
+    return render(request, "books/home.html")
+
+
 def main_view(request):
     # Top 5 Bücher mit den meisten Bewertungen
     top_isbns = (

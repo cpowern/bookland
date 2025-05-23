@@ -17,21 +17,6 @@ def register_view(request):
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
 
-
-# ---------- Login / Logout ----------
-def login_view(request):
-    if request.method == "POST":
-        user = authenticate(
-            request,
-            username=request.POST["username"],
-            password=request.POST["password"],
-        )
-        if user:
-            login(request, user)
-            return redirect("recommendations")
-    return render(request, "users/login.html")
-
-
 def logout_view(request):
     logout(request)
     return redirect("login")
