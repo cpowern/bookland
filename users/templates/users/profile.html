@@ -1,0 +1,14 @@
+<h2>Deine Bewertungen</h2>
+
+{% if ratings %}
+<ul>
+  {% for r in ratings %}
+    <li>
+      <strong>{{ r.title }}</strong> von {{ r.author }} –
+      deine Bewertung: {{ r.score }}
+    </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>Du hast noch keine Bücher bewertet.</p>
+{% endif %}

@@ -1,12 +1,12 @@
+# users/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
-from .forms import RegisterForm
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from books.models import Rating          # ← für Profil‑Statistik
+from .forms import RegisterForm                        # eigenes Formular
+from books.models import Rating
+from books.views import books                          # DataFrame aus CSV
 
-
-
+# ---------- Registrierung ----------
 def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
@@ -17,41 +17,44 @@ def register_view(request):
         form = RegisterForm()
     return render(request, "users/register.html", {"form": form})
 
+
+# ---------- Login / Logout ----------
 def login_view(request):
     if request.method == "POST":
-        uname = request.POST["username"]
-        pw = request.POST["password"]
-        user = authenticate(request, username=uname, password=pw)
+        user = authenticate(
+            request,
+            username=request.POST["username"],
+            password=request.POST["password"],
+        )
         if user:
             login(request, user)
             return redirect("recommendations")
     return render(request, "users/login.html")
 
+
 def logout_view(request):
     logout(request)
     return redirect("login")
 
-# Registrierung
-def register_view(request):
-    if request.method == "POST":
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect("recommendations")
-    else:
-        form = UserCreationForm()
-    return render(request, "registration/register.html", {"form": form})
 
-# (Login/Logout nimmst du aus django.contrib.auth.urls)
-
-# Profil‑Seite
+# ---------- Profil ----------
 @login_required
 def profile_view(request):
-    ratings = Rating.objects.filter(user=request.user).select_related("book")
-    total   = ratings.count()
+    """Zeigt alle eigenen Bewertungen + Buchinfos."""
+    qs = Rating.objects.filter(user=request.user)
+
+    ratings = []
+    for r in qs:
+        row = books[books["ISBN"] == r.isbn]
+        if not row.empty:
+            title = row.iloc[0]["Book-Title"]
+            author = row.iloc[0]["Book-Author"]
+        else:
+            title, author = r.isbn, "–"
+        ratings.append({"title": title, "author": author, "score": r.score})
+
     return render(
         request,
-        "profile.html",
-        {"ratings": ratings, "total_ratings": total}
+        "users/profile.html",               # Template-Pfad
+        {"ratings": ratings, "total_ratings": qs.count()},
     )
