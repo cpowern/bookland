@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from .forms import RegisterForm                        # eigenes Formular
 from books.models import Rating
-from books.views import books                          # DataFrame aus CSV
+# from books.views import books                          # DataFrame aus CSV
 
 # ---------- Registrierung ----------
 def register_view(request):

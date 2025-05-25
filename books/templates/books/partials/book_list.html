@@ -1,10 +1,8 @@
 {% for book in books %}
-    <li>
-        <strong>{{ book.title }}</strong> von {{ book.author }}
-        {% if book.isbn %}
-            – <a href="{% url 'rate_book' book.isbn %}">⭐ Bewerten</a>
-        {% else %}
-            – Keine Bewertung möglich
-        {% endif %}
-    </li>
+<li>
+    <strong>{{ book.title }}</strong> von {{ book.author }}
+    – <a href="{% url 'rate_book' book.isbn %}">⭐ bewerten</a>
+</li>
+{% empty %}
+<li><em>Keine Treffer …</em></li>
 {% endfor %}

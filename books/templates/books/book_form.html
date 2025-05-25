@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>{% if mode == "add" %}Neues Buch{% else %}Buch bearbeiten{% endif %}</title></head>
+<body>
+  <h1>
+    {% if mode == "add" %}📚 Buch anlegen
+    {% elif mode == "edit" %}✏️ Buch bearbeiten
+    {% else %}🗑️ Buch löschen{% endif %}
+  </h1>
+
+  <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">
+        {% if mode == "add" %}Speichern{% elif mode == "edit" %}Aktualisieren{% else %}Löschen{% endif %}
+      </button>
+      <a href="{% url 'main' %}">Abbruch</a>
+  </form>
+</body>
+</html>
