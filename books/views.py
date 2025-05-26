@@ -168,30 +168,32 @@ def recommendations_view(request):
 
 
 def search_books_view(request):
-    q = request.GET.get("query", "")
+    q = request.GET.get("query", "").strip()
     found_books = []
 
     if q:
-        # Lokale DB-Suche
-        found_books_db = Book.objects.filter(title__icontains=q)
-        for b in found_books_db:
-            found_books.append({
-                "title": b.title,
-                "author": b.author,
-                "isbn": b.isbn,
-                "count": Rating.objects.filter(isbn=b.isbn).count()
-            })
+        # Bücher aus lokaler DB
+        found_books = list(Book.objects.filter(title__icontains=q))
 
-        # CSV-Suche (ergänze nur Bücher, die noch nicht lokal vorhanden sind)
+        # Bücher aus CSV, die noch nicht in der DB sind
         found_csv = books_csv[books_csv["Book-Title"].str.contains(q, case=False, na=False)]
-        for _, row in found_csv.iterrows():
-            if not Book.objects.filter(isbn=row["ISBN"]).exists():
-                found_books.append({
-                    "title": row["Book-Title"],
-                    "author": row["Book-Author"],
-                    "isbn": row["ISBN"],
-                    "count": Rating.objects.filter(isbn=row["ISBN"]).count()
-                })
+        new_books = []
 
-    html = render_to_string("books/partials/book_list.html", {"books": found_books})
+        for _, row in found_csv.iterrows():
+            isbn = row["ISBN"]
+            if not Book.objects.filter(isbn=isbn).exists():
+                new_books.append(Book(
+                    isbn=isbn,
+                    title=row["Book-Title"],
+                    author=row["Book-Author"],
+                    created_by=None
+                ))
+
+        if new_books:
+            Book.objects.bulk_create(new_books)
+
+        # Jetzt erneut alle Bücher (neu + alte) holen
+        found_books += list(Book.objects.filter(isbn__in=[b.isbn for b in new_books]))
+
+    html = render_to_string("books/partials/book_list.html", {"books": found_books, "request": request})
     return HttpResponse(html)

@@ -33,6 +33,22 @@
         </div>
 
         <ul id="bookResults" class="list-group"><!-- AJAX-Treffer --></ul>
+
+        <h2 class="mt-5">🌟 Beliebteste Bücher</h2>
+        <ul class="list-group">
+            {% for book in books %}
+            <li class="list-group-item">
+                <strong>{{ book.title }}</strong> von {{ book.author }} ({{ book.count }} Bewertungen)
+                – <a href="{% url 'rate_book' book.isbn %}">⭐ bewerten</a>
+                {% if request.user.is_superuser or book.created_by == request.user %}
+                    – <a href="{% url 'edit_book' book.isbn %}">✏️ edit</a>
+                    – <a href="{% url 'delete_book' book.isbn %}">🗑️ del</a>
+                {% endif %}
+            </li>
+            {% empty %}
+            <li class="list-group-item"><em>Keine Bücher gefunden.</em></li>
+            {% endfor %}
+        </ul>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
