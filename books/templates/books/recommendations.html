@@ -31,10 +31,14 @@
     <h1>Deine Buchempfehlungen 📚</h1>
     <ul>
         {% for book in books %}
-        <li>
-            <strong>{{ book.title }}</strong> von {{ book.author }}
-            – <a href="{% url 'rate_book' book.isbn %}">bewerten</a>
-        </li>
+<li>
+    <strong>{{ book.title }}</strong> von {{ book.author }}
+    – <a href="{% url 'rate_book' book.isbn %}">bewerten</a>
+    {% if request.user.is_superuser or book.created_by == request.user %}
+        – <a href="{% url 'edit_book' book.isbn %}">✏️ edit</a>
+        – <a href="{% url 'delete_book' book.isbn %}">🗑️ del</a>
+    {% endif %}
+</li>
         {% endfor %}
     </ul>
 </body>

@@ -59,7 +59,9 @@ def add_book_view(request):
     if request.method == "POST":
         form = BookForm(request.POST)
         if form.is_valid():
-            form.save()
+            book = form.save(commit=False)
+            book.created_by = request.user
+            book.save()
             return redirect("main")
     else:
         form = BookForm()
@@ -69,6 +71,8 @@ def add_book_view(request):
 @login_required
 def edit_book_view(request, isbn):
     book = get_object_or_404(Book, isbn=isbn)
+    if book.created_by != request.user and not request.user.is_superuser:
+        return HttpResponseForbidden("Du darfst dieses Buch nicht bearbeiten.")
     if request.method == "POST":
         form = BookForm(request.POST, instance=book)
         if form.is_valid():
@@ -82,21 +86,20 @@ def edit_book_view(request, isbn):
         {"form": form, "mode": "edit", "book": book},
     )
 
-
 @login_required
 def delete_book_view(request, isbn):
     book = get_object_or_404(Book, isbn=isbn)
+    if book.created_by != request.user and not request.user.is_superuser:
+        return HttpResponseForbidden("Du darfst dieses Buch nicht löschen.")
     if request.method == "POST":
         book.delete()
-        Rating.objects.filter(isbn=isbn).delete()  # optional: Ratings mit löschen
+        Rating.objects.filter(isbn=isbn).delete()
         return redirect("main")
     return render(
         request,
         "books/book_form.html",
         {"form": None, "mode": "delete", "book": book},
     )
-# ---------------------------------------------------------------
-
 @login_required
 def rate_book_view(request, isbn):
     # falls Buch noch nicht in DB: aus CSV übernehmen – sonst Leereintrag
@@ -108,13 +111,15 @@ def rate_book_view(request, isbn):
             "author":  row.iloc[0]["Book-Author"],
         }
 
-    book, _ = Book.objects.get_or_create(
-    isbn=isbn,
-    defaults={
-        "title": row["Book-Title"],
-        "author": row["Book-Author"]
-    } if not row.empty else {}
-)
+        book, _ = Book.objects.get_or_create(
+            isbn=isbn,
+            defaults={
+                "title": row["Book-Title"].values[0] if not row.empty else isbn,
+                "author": row["Book-Author"].values[0] if not row.empty else "Unbekannt",
+                "created_by": request.user
+            }
+        )
+
 
     rating, _ = Rating.objects.get_or_create(user=request.user, isbn=isbn)
 
