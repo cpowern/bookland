@@ -8,14 +8,17 @@ def train_and_save_model():
     df = df[df['Book-Rating'] > 0]
 
     user_counts = df['User-ID'].value_counts()
-    active_users = user_counts[user_counts > 50].index
+    active_users = user_counts[user_counts > 10].index
     df = df[df['User-ID'].isin(active_users)]
 
     book_counts = df['ISBN'].value_counts()
-    popular_books = book_counts[book_counts > 50].index
+    popular_books = book_counts[book_counts > 10].index
     df = df[df['ISBN'].isin(popular_books)]
 
-    pivot = df.pivot_table(index='User-ID', columns='ISBN', values='Book-Rating').fillna(0)
+    # Nur Bewertungen ≥ 4 berücksichtigen
+    df['Positive-Rating'] = df['Book-Rating'].apply(lambda x: 1 if x >= 4 else 0)
+
+    pivot = df.pivot_table(index='User-ID', columns='ISBN', values='Positive-Rating').fillna(0)
     similarity = cosine_similarity(pivot)
 
     joblib.dump((pivot, similarity), 'book_model.joblib')
