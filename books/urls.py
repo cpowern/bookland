@@ -1,4 +1,5 @@
 from django.urls import path
+from . import views
 from .views import (
     recommendations_view, profile_view, rate_book_view,
     home_view, main_view, search_books_view,
@@ -17,4 +18,7 @@ urlpatterns = [
     path("book/add/", add_book_view, name="add_book"),
     path("book/<str:isbn>/edit/", edit_book_view, name="edit_book"),
     path("book/<str:isbn>/delete/", delete_book_view, name="delete_book"),
+
+    # Machine Learning URLS
+   path('recommendations/', views.recommendations_view, name='recommendations'),
 ]

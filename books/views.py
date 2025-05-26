@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.http import HttpResponse
 from django.template.loader import render_to_string
+import joblib
 
 from .models import Rating, Book, UserProfile
 from .forms  import RatingForm, BookForm
@@ -197,3 +198,59 @@ def search_books_view(request):
 
     html = render_to_string("books/partials/book_list.html", {"books": found_books, "request": request})
     return HttpResponse(html)
+
+# ------------------------- Machine Learning ----------------------
+# Modell und Daten laden (einmalig)
+pivot, similarity = joblib.load('ml/book_model.joblib')
+books_df = pd.read_csv("ml/raw_data/Books.csv", encoding="latin-1", on_bad_lines='skip', low_memory=False)
+
+def get_similar_users(user_id, top_n=5):
+    if user_id not in pivot.index:
+        return []
+    user_idx = pivot.index.get_loc(user_id)
+    sim_scores = similarity[user_idx]
+    similar_indices = np.argsort(sim_scores)[::-1][1:top_n+1]
+    similar_users = pivot.index[similar_indices]
+    return similar_users
+
+def recommend_books(user_id, top_n=5):
+    similar_users = get_similar_users(user_id)
+    if not len(similar_users):
+        return []
+
+    similar_users_ratings = pivot.loc[similar_users]
+    user_rated_books = pivot.loc[user_id]
+
+    candidate_books = similar_users_ratings.loc[:, user_rated_books == 0]
+    positive_counts = (candidate_books >= 1).sum(axis=0)
+
+    if positive_counts.empty:
+        return []
+
+    recommended_books = positive_counts.sort_values(ascending=False).head(top_n)
+    return recommended_books.index.tolist()
+
+def recommendations_view(request):
+    books = []
+    hardcoded_ml_user_id = 254  # 🔥 HIER festlegen
+    print("DEBUG: Hardcoded ML-User-ID:", hardcoded_ml_user_id)
+    print("DEBUG: All Pivot IDs (first 10):", list(pivot.index)[:10])
+    print("DEBUG: Is in pivot?:", hardcoded_ml_user_id in pivot.index)
+
+    if hardcoded_ml_user_id in pivot.index:
+        recommended_isbns = recommend_books(hardcoded_ml_user_id)
+        # 🛑 DEBUG 2: Check what recommend_books returns
+        print("DEBUG: Recommended ISBNs:", recommended_isbns)
+        for isbn in recommended_isbns:
+            match = books_df[books_df['ISBN'] == isbn]
+            if not match.empty:
+                row = match.iloc[0]
+                books.append({
+                    'isbn': isbn,
+                    'title': row['Book-Title'],
+                    'author': row['Book-Author'],
+                })
+        # 🛑 DEBUG 3: Check final book list for template
+        print("DEBUG: Final Books List:", books)
+
+    return render(request, 'books/recommendations.html', {'books': books})
