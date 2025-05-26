@@ -13,7 +13,8 @@ urlpatterns = [
     ),
     path(
         "logout/",
-        auth_views.LogoutView.as_view(next_page="login"),
+        auth_views.LogoutView.as_view(),
         name="user_logout",
     ),
+
 ]
