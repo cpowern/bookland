@@ -1,5 +1,6 @@
 import joblib
 import numpy as np
+import pandas as pd
 
 def get_similar_users(pivot, similarity, user_id, top_n=5):
     if user_id not in pivot.index:
@@ -19,10 +20,10 @@ def recommend_books(user_id, top_n=5):
     similar_users_ratings = pivot.loc[similar_users]
     user_rated_books = pivot.loc[user_id]
 
-    # Nur Bücher, die ähnliche Nutzer ≥4 bewertet haben
+    # Nur Bücher, die ähnliche Nutzer ≥1 (d. h. ≥4 Sterne) bewertet haben
     candidate_books = similar_users_ratings.loc[:, user_rated_books == 0]
 
-    # Summiere, wie viele ähnliche User das Buch ≥4 bewertet haben
+    # Zählen, wie viele ähnliche User positiv bewertet haben
     positive_counts = (candidate_books >= 1).sum(axis=0)
 
     if positive_counts.empty:
@@ -32,12 +33,31 @@ def recommend_books(user_id, top_n=5):
     recommended_books = positive_counts.sort_values(ascending=False).head(top_n)
     return recommended_books.index.tolist()
 
+def map_isbn_to_titles(isbn_list, books_df):
+    titles = []
+    for isbn in isbn_list:
+        match = books_df[books_df['ISBN'] == isbn]
+        if not match.empty:
+            titles.append(match.iloc[0]['Book-Title'])
+        else:
+            titles.append(f"(Titel nicht gefunden für ISBN {isbn})")
+    return titles
 
 if __name__ == "__main__":
+    # Lade Modell
     pivot, similarity = joblib.load('book_model.joblib')
+
+    # Lade Buchdaten
+    books_df = pd.read_csv("ml/raw_data/Books.csv", encoding="latin-1", on_bad_lines='skip', low_memory=False)
+
+    # Nutzer-ID eingeben
     user_id = int(input("🔍 Nutzer-ID eingeben: "))
     recommendations = recommend_books(user_id)
+
     if recommendations:
-        print(f"📚 Empfehlungen für User {user_id}: {recommendations}")
+        titles = map_isbn_to_titles(recommendations, books_df)
+        print(f"\n📚 Empfehlungen für User {user_id}:\n")
+        for i, title in enumerate(titles, 1):
+            print(f"{i}. {title}")
     else:
         print(f"❌ Keine Empfehlungen gefunden für User {user_id}.")
