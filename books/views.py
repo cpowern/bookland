@@ -103,24 +103,26 @@ def delete_book_view(request, isbn):
     )
 @login_required
 def rate_book_view(request, isbn):
-    # falls Buch noch nicht in DB: aus CSV übernehmen – sonst Leereintrag
-    defaults = {}
     row = books_csv[books_csv["ISBN"] == isbn]
     if not row.empty:
-        defaults = {
-            "title":   row.iloc[0]["Book-Title"],
-            "author":  row.iloc[0]["Book-Author"],
-        }
-
         book, _ = Book.objects.get_or_create(
             isbn=isbn,
             defaults={
-                "title": row["Book-Title"].values[0] if not row.empty else isbn,
-                "author": row["Book-Author"].values[0] if not row.empty else "Unbekannt",
+                "title": row["Book-Title"].values[0],
+                "author": row["Book-Author"].values[0],
                 "created_by": request.user
             }
         )
-
+    else:
+        # Fallback, falls Buch nicht gefunden wird
+        book, _ = Book.objects.get_or_create(
+            isbn=isbn,
+            defaults={
+                "title": isbn,
+                "author": "Unbekannt",
+                "created_by": request.user
+            }
+        )
 
     rating, _ = Rating.objects.get_or_create(user=request.user, isbn=isbn)
 

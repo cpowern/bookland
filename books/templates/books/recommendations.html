@@ -1,45 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-    <title>Buchempfehlungen</title>
-    <style>
-        .top-right {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
-        .top-left {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>Bookland – Empfehlungen</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="top-left">
-        <a href="{% url 'main' %}">
-            <button>🏠 Zur Startseite</button>
-        </a>
+<body class="bg-light">
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between mb-4">
+            <a href="{% url 'main' %}" class="btn btn-outline-primary">🏠 Zur Startseite</a>
+            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">👤 Mein Profil</a>
+        </div>
+
+        <h1 class="mb-4 text-center">📖 Deine Buchempfehlungen</h1>
+
+        {% if books %}
+            <ul class="list-group">
+                {% for book in books %}
+                <li class="list-group-item">
+                    <strong>{{ book.title }}</strong> von {{ book.author }}
+                    – <a href="{% url 'rate_book' book.isbn %}">⭐ bewerten</a>
+                    {% if request.user.is_superuser or book.created_by == request.user %}
+                        – <a href="{% url 'edit_book' book.isbn %}">✏️ edit</a>
+                        – <a href="{% url 'delete_book' book.isbn %}">🗑️ del</a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="alert alert-warning text-center mt-4">
+                ❌ Keine Empfehlungen gefunden.
+            </div>
+        {% endif %}
     </div>
 
-    <div class="top-right">
-        <a href="{% url 'profile' %}">
-            <button>👤 Profil</button>
-        </a>
-    </div>
-
-    <h1>Deine Buchempfehlungen 📚</h1>
-
-    {% if books %}
-        <ul>
-            {% for book in books %}
-            <li>
-                <strong>{{ book.title }}</strong> von {{ book.author }}
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>❌ Keine Empfehlungen gefunden.</p>
-    {% endif %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
